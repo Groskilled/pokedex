@@ -28,8 +28,8 @@ func printLocations(results []Result) {
 	}
 }
 
-func GetNextLocations(conf *config.Config) error {
-	res, err := http.Get(conf.Next)
+func getLocations(path string) Answer {
+	res, err := http.Get(path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,6 +46,11 @@ func GetNextLocations(conf *config.Config) error {
 	if err != nil {
 		log.Fatalf("error unmarshalling JSON: %v", err)
 	}
+	return ans
+}
+
+func GetNextLocations(conf *config.Config) error {
+	ans := getLocations(conf.Next)
 	conf.Next = *ans.Next
 	if ans.Previous != nil {
 		conf.Previous = *ans.Previous
@@ -55,23 +60,7 @@ func GetNextLocations(conf *config.Config) error {
 }
 
 func GetPrevLocations(conf *config.Config) error {
-	res, err := http.Get(conf.Previous)
-	if err != nil {
-		log.Fatal(err)
-	}
-	body, err := io.ReadAll(res.Body)
-	res.Body.Close()
-	if res.StatusCode > 299 {
-		log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
-	ans := Answer{}
-	err = json.Unmarshal(body, &ans)
-	if err != nil {
-		log.Fatalf("error unmarshalling JSON: %v", err)
-	}
+	ans := getLocations(conf.Previous)
 	conf.Next = *ans.Next
 	if ans.Previous != nil {
 		conf.Previous = *ans.Previous
