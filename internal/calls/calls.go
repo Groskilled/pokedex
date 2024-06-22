@@ -1,15 +1,35 @@
 package calls
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"github.com/Groskilled/pokedex/internal/calls"
+
+	"github.com/Groskilled/pokedex/internal/config"
 )
 
-func GetLocations(conf *Config) error {
-	res, err := http.Get("https://pokeapi.co/api/v2/location-area/")
+type Result struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
+type Answer struct {
+	Count    int      `json:"count"`
+	Next     *string  `json:"next"`
+	Previous *string  `json:"previous"`
+	Results  []Result `json:"results"`
+}
+
+func printLocations(results []Result) {
+	for _, result := range results {
+		fmt.Println(result.Name)
+	}
+}
+
+func GetNextLocations(conf *config.Config) error {
+	res, err := http.Get(conf.Next)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -21,6 +41,41 @@ func GetLocations(conf *Config) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%s", body)
+	ans := Answer{}
+	err = json.Unmarshal(body, &ans)
+	if err != nil {
+		log.Fatalf("error unmarshalling JSON: %v", err)
+	}
+	conf.Next = *ans.Next
+	if ans.Previous != nil {
+		conf.Previous = *ans.Previous
+	}
+	printLocations(ans.Results)
+	return nil
+}
+
+func GetPrevLocations(conf *config.Config) error {
+	res, err := http.Get(conf.Previous)
+	if err != nil {
+		log.Fatal(err)
+	}
+	body, err := io.ReadAll(res.Body)
+	res.Body.Close()
+	if res.StatusCode > 299 {
+		log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+	ans := Answer{}
+	err = json.Unmarshal(body, &ans)
+	if err != nil {
+		log.Fatalf("error unmarshalling JSON: %v", err)
+	}
+	conf.Next = *ans.Next
+	if ans.Previous != nil {
+		conf.Previous = *ans.Previous
+	}
+	printLocations(ans.Results)
 	return nil
 }

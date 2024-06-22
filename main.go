@@ -9,7 +9,7 @@ import (
 	"github.com/Groskilled/pokedex/internal/config"
 )
 
-func commandHelp() error {
+func commandHelp(conf *config.Config) error {
 	fmt.Println("This is the help command")
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
@@ -20,13 +20,23 @@ func commandHelp() error {
 	return nil
 }
 
-func commandMap(conf *Config) error {
-	locations := calls.GetLocations()
-	fmt.Println(locations)
+func commandMap(conf *config.Config) error {
+	err := calls.GetNextLocations(conf)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return nil
 }
 
-func commandExit() error {
+func commandMapB(conf *config.Config) error {
+	err := calls.GetPrevLocations(conf)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return nil
+}
+
+func commandExit(conf *config.Config) error {
 	fmt.Println("Bye !")
 	os.Exit(0)
 	return nil
@@ -35,10 +45,10 @@ func commandExit() error {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*config.Config) error
 }
 
-func getCommands() map[string]cliCommand {
+func getCommands(conf config.Config) map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
 			name:        "help",
@@ -47,8 +57,13 @@ func getCommands() map[string]cliCommand {
 		},
 		"map": {
 			name:        "map",
-			description: "Displays the names of 20 location areas in the Pokemon world",
+			description: "Displays the names of next 20 location areas in the Pokemon world",
 			callback:    commandMap,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Displays the names of 20 previous location areas in the Pokemon world",
+			callback:    commandMapB,
 		},
 		"exit": {
 			name:        "exit",
@@ -60,7 +75,11 @@ func getCommands() map[string]cliCommand {
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
-	commands := getCommands()
+	conf := config.Config{
+		Next:     "https://pokeapi.co/api/v2/location-area",
+		Previous: "",
+	}
+	commands := getCommands(conf)
 
 	for {
 		fmt.Print("pokedex > ")               // Print the prompt
@@ -74,7 +93,7 @@ func main() {
 		input = input[:len(input)-1]
 
 		if cmd, exists := commands[input]; exists {
-			cmd.callback()
+			cmd.callback(&conf)
 		}
 
 	}
