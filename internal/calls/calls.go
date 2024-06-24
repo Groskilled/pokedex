@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/Groskilled/pokedex/internal/cache"
 	"github.com/Groskilled/pokedex/internal/config"
 )
 
@@ -28,18 +29,27 @@ func printLocations(results []Result) {
 	}
 }
 
-func getLocations(path string) Answer {
-	res, err := http.Get(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-	body, err := io.ReadAll(res.Body)
-	res.Body.Close()
-	if res.StatusCode > 299 {
-		log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
-	}
-	if err != nil {
-		log.Fatal(err)
+func getLocations(path string, cache *cache.Cache) Answer {
+	var body []byte
+	var err error
+	cached := false
+	body, cached = cache.Get(path)
+	if !cached {
+		res, err := http.Get(path)
+		if err != nil {
+			log.Fatal(err)
+		}
+		body, err = io.ReadAll(res.Body)
+		res.Body.Close()
+		if res.StatusCode > 299 {
+			log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("before Add")
+		cache.Add(path, body)
+		fmt.Println("Add done")
 	}
 	ans := Answer{}
 	err = json.Unmarshal(body, &ans)
@@ -49,8 +59,8 @@ func getLocations(path string) Answer {
 	return ans
 }
 
-func GetNextLocations(conf *config.Config) error {
-	ans := getLocations(conf.Next)
+func GetNextLocations(conf *config.Config, cache *cache.Cache) error {
+	ans := getLocations(conf.Next, cache)
 	conf.Next = *ans.Next
 	if ans.Previous != nil {
 		conf.Previous = *ans.Previous
@@ -59,8 +69,8 @@ func GetNextLocations(conf *config.Config) error {
 	return nil
 }
 
-func GetPrevLocations(conf *config.Config) error {
-	ans := getLocations(conf.Previous)
+func GetPrevLocations(conf *config.Config, cache *cache.Cache) error {
+	ans := getLocations(conf.Previous, cache)
 	conf.Next = *ans.Next
 	if ans.Previous != nil {
 		conf.Previous = *ans.Previous

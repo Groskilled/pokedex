@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Groskilled/pokedex/internal/cache"
 	"github.com/Groskilled/pokedex/internal/calls"
 	"github.com/Groskilled/pokedex/internal/config"
 )
 
-func commandHelp(conf *config.Config) error {
+func commandHelp(conf *config.Config, cache *cache.Cache) error {
 	fmt.Println("This is the help command")
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
@@ -20,23 +21,23 @@ func commandHelp(conf *config.Config) error {
 	return nil
 }
 
-func commandMap(conf *config.Config) error {
-	err := calls.GetNextLocations(conf)
+func commandMap(conf *config.Config, cache *cache.Cache) error {
+	err := calls.GetNextLocations(conf, cache)
 	if err != nil {
 		fmt.Println(err)
 	}
 	return nil
 }
 
-func commandMapB(conf *config.Config) error {
-	err := calls.GetPrevLocations(conf)
+func commandMapB(conf *config.Config, cache *cache.Cache) error {
+	err := calls.GetPrevLocations(conf, cache)
 	if err != nil {
 		fmt.Println(err)
 	}
 	return nil
 }
 
-func commandExit(conf *config.Config) error {
+func commandExit(conf *config.Config, cache *cache.Cache) error {
 	fmt.Println("Bye !")
 	os.Exit(0)
 	return nil
@@ -45,10 +46,10 @@ func commandExit(conf *config.Config) error {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config.Config) error
+	callback    func(*config.Config, *cache.Cache) error
 }
 
-func getCommands(conf config.Config) map[string]cliCommand {
+func getCommands(conf config.Config, cache *cache.Cache) map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
 			name:        "help",
@@ -79,7 +80,8 @@ func main() {
 		Next:     "https://pokeapi.co/api/v2/location-area",
 		Previous: "",
 	}
-	commands := getCommands(conf)
+	cache := cache.NewCache(300)
+	commands := getCommands(conf, cache)
 
 	for {
 		fmt.Print("pokedex > ")               // Print the prompt
@@ -93,7 +95,7 @@ func main() {
 		input = input[:len(input)-1]
 
 		if cmd, exists := commands[input]; exists {
-			cmd.callback(&conf)
+			cmd.callback(&conf, cache)
 		}
 
 	}
