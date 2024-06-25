@@ -4,52 +4,19 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/Groskilled/pokedex/internal/cache"
-	"github.com/Groskilled/pokedex/internal/calls"
 	"github.com/Groskilled/pokedex/internal/config"
 )
-
-func commandHelp(conf *config.Config, cache *cache.Cache) error {
-	fmt.Println("This is the help command")
-	fmt.Println("Welcome to the Pokedex!")
-	fmt.Println("Usage:")
-	fmt.Println("")
-	fmt.Println("help: Displays a help message")
-	fmt.Println("exit: Exit the Pokedex")
-
-	return nil
-}
-
-func commandMap(conf *config.Config, cache *cache.Cache) error {
-	err := calls.GetNextLocations(conf, cache)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return nil
-}
-
-func commandMapB(conf *config.Config, cache *cache.Cache) error {
-	err := calls.GetPrevLocations(conf, cache)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return nil
-}
-
-func commandExit(conf *config.Config, cache *cache.Cache) error {
-	fmt.Println("Bye !")
-	os.Exit(0)
-	return nil
-}
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config.Config, *cache.Cache) error
+	callback    func(*config.Config, *cache.Cache, string) error
 }
 
-func getCommands(conf config.Config, cache *cache.Cache) map[string]cliCommand {
+func getCommands(conf config.Config, cache *cache.Cache, area string) map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
 			name:        "help",
@@ -66,6 +33,17 @@ func getCommands(conf config.Config, cache *cache.Cache) map[string]cliCommand {
 			description: "Displays the names of 20 previous location areas in the Pokemon world",
 			callback:    commandMapB,
 		},
+		"explore": {
+			name:        "explore",
+			description: "Exlpore the designated location area",
+			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "Try to catch the give Pokemon",
+			callback:    commandCatch,
+		},
+
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",
@@ -81,11 +59,12 @@ func main() {
 		Previous: "",
 	}
 	cache := cache.NewCache(300)
-	commands := getCommands(conf, cache)
+	area := ""
+	commands := getCommands(conf, cache, area)
 
 	for {
-		fmt.Print("pokedex > ")               // Print the prompt
-		input, err := reader.ReadString('\n') // Read the input until newline
+		fmt.Print("pokedex > ")
+		input, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println("Error reading input:", err)
 			continue
@@ -93,9 +72,12 @@ func main() {
 
 		// Trim the newline character at the end of the input
 		input = input[:len(input)-1]
-
+		splitted := strings.Split(input, " ")
+		if len(splitted) > 1 {
+			input, area = splitted[0], splitted[1]
+		}
 		if cmd, exists := commands[input]; exists {
-			cmd.callback(&conf, cache)
+			cmd.callback(&conf, cache, area)
 		}
 
 	}
