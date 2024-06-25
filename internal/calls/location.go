@@ -9,6 +9,18 @@ import (
 	"github.com/Groskilled/pokedex/internal/config"
 )
 
+type Result struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
+type locationAnswer struct {
+	Count    int      `json:"count"`
+	Next     *string  `json:"next"`
+	Previous *string  `json:"previous"`
+	Results  []Result `json:"results"`
+}
+
 func printLocations(results []Result) {
 	for _, result := range results {
 		fmt.Println(result.Name)
