@@ -1,6 +1,7 @@
 package calls
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -8,11 +9,12 @@ import (
 	"github.com/Groskilled/pokedex/internal/cache"
 )
 
-func getFromApi(path string, cache *cache.Cache) []byte {
+func GetFromApi(path string, cache *cache.Cache) []byte {
 	var body []byte
 	cached := false
 	body, cached = cache.Get(path)
 	if !cached {
+		fmt.Println("Not cached")
 		res, err := http.Get(path)
 		if err != nil {
 			log.Fatal(err)

@@ -9,6 +9,17 @@ import (
 	"github.com/Groskilled/pokedex/internal/config"
 )
 
+type pokemonAnswer struct {
+	Pokemon struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"pokemon"`
+}
+
+type PartialResponse struct {
+	PokemonEncounters []pokemonAnswer `json:"pokemon_encounters"`
+}
+
 type Result struct {
 	Name string `json:"name"`
 	URL  string `json:"url"`
@@ -28,7 +39,7 @@ func printLocations(results []Result) {
 }
 
 func GetNextLocations(conf *config.Config, cache *cache.Cache) error {
-	body := getFromApi(conf.Next, cache)
+	body := GetFromApi(conf.Next, cache)
 	ans := locationAnswer{}
 	err := json.Unmarshal(body, &ans)
 	if err != nil {
@@ -43,7 +54,7 @@ func GetNextLocations(conf *config.Config, cache *cache.Cache) error {
 }
 
 func GetPrevLocations(conf *config.Config, cache *cache.Cache) error {
-	body := getFromApi(conf.Next, cache)
+	body := GetFromApi(conf.Next, cache)
 	ans := locationAnswer{}
 	err := json.Unmarshal(body, &ans)
 	if err != nil {
@@ -59,7 +70,7 @@ func GetPrevLocations(conf *config.Config, cache *cache.Cache) error {
 
 func ExploreLocation(conf *config.Config, cache *cache.Cache, area string) error {
 	path := "https://pokeapi.co/api/v2/location-area/" + area
-	body := getFromApi(path, cache)
+	body := GetFromApi(path, cache)
 	var result PartialResponse
 	if err := json.Unmarshal(body, &result); err != nil {
 		log.Fatalf("error unmarshalling JSON: %v", err)

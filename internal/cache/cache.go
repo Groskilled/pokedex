@@ -47,7 +47,6 @@ func (c *Cache) Cleanup(expiration time.Duration) {
 	}
 }
 
-
 func (c *Cache) reapLoop() {
 	ticker := time.NewTicker(c.interval)
 	defer ticker.Stop()
@@ -61,8 +60,8 @@ func (c *Cache) reapLoop() {
 	}
 }
 
-func NewCache(t time.Duration) *Cache {
-	cache := &Cache{
+func NewCache(t time.Duration) Cache {
+	cache := Cache{
 		entries:  make(map[string]cacheEntry),
 		interval: t,
 	}

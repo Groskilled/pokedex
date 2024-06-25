@@ -5,49 +5,55 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Groskilled/pokedex/internal/cache"
 	"github.com/Groskilled/pokedex/internal/config"
+	"github.com/Groskilled/pokedex/internal/pokemon"
 )
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config.Config, *cache.Cache, string) error
+	callback    func(*config.Config, *cache.Cache, string, *pokemon.Pokedex) error
 }
 
-func getCommands(conf config.Config, cache *cache.Cache, area string) map[string]cliCommand {
+func getCommands(conf config.Config, cache *cache.Cache, area string, pokedex *pokemon.Pokedex) map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
 			name:        "help",
 			description: "Displays a help message",
-			callback:    commandHelp,
+			callback:    CommandHelp,
 		},
 		"map": {
 			name:        "map",
 			description: "Displays the names of next 20 location areas in the Pokemon world",
-			callback:    commandMap,
+			callback:    CommandMap,
 		},
 		"mapb": {
 			name:        "mapb",
 			description: "Displays the names of 20 previous location areas in the Pokemon world",
-			callback:    commandMapB,
+			callback:    CommandMapB,
 		},
 		"explore": {
 			name:        "explore",
 			description: "Exlpore the designated location area",
-			callback:    commandExplore,
+			callback:    CommandExplore,
 		},
 		"catch": {
 			name:        "catch",
 			description: "Try to catch the give Pokemon",
-			callback:    commandCatch,
+			callback:    CommandCatch,
 		},
-
+		"inspect": {
+			name:        "inspect",
+			description: "Retrive the information of the given pokemon",
+			callback:    CommandInspect,
+		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",
-			callback:    commandExit,
+			callback:    CommandExit,
 		},
 	}
 }
@@ -58,9 +64,10 @@ func main() {
 		Next:     "https://pokeapi.co/api/v2/location-area",
 		Previous: "",
 	}
-	cache := cache.NewCache(300)
+	cache := cache.NewCache(300 * time.Second)
 	area := ""
-	commands := getCommands(conf, cache, area)
+	pokedex := pokemon.Pokedex{}
+	commands := getCommands(conf, &cache, area, &pokedex)
 
 	for {
 		fmt.Print("pokedex > ")
@@ -70,14 +77,13 @@ func main() {
 			continue
 		}
 
-		// Trim the newline character at the end of the input
 		input = input[:len(input)-1]
 		splitted := strings.Split(input, " ")
 		if len(splitted) > 1 {
 			input, area = splitted[0], splitted[1]
 		}
 		if cmd, exists := commands[input]; exists {
-			cmd.callback(&conf, cache, area)
+			cmd.callback(&conf, &cache, area, &pokedex)
 		}
 
 	}
