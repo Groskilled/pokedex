@@ -1,7 +1,6 @@
 package calls
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -14,7 +13,6 @@ func GetFromApi(path string, cache *cache.Cache) []byte {
 	cached := false
 	body, cached = cache.Get(path)
 	if !cached {
-		fmt.Println("Not cached")
 		res, err := http.Get(path)
 		if err != nil {
 			log.Fatal(err)

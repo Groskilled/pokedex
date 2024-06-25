@@ -50,6 +50,11 @@ func getCommands(conf config.Config, cache *cache.Cache, area string, pokedex *p
 			description: "Retrive the information of the given pokemon",
 			callback:    CommandInspect,
 		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "Lists all the pokemon in the pokedex",
+			callback:    CommandPokedex,
+		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",
